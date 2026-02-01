@@ -406,7 +406,7 @@
             \tl_set:Nx \l_tmpa_tl { \g_@@_filename_tl .apx }
             \tl_set:Nx \g_@@_filename_tl { \l_tmpa_tl }
             \msg_error:nnx { AppendixAfter } { unsafe-extension } { \l_@@_ext_tl }
-            \msg_error:nnx { AppendixAfter } { instead-filename } { \g_@@_filename_tl }
+            \msg_info:nnx { AppendixAfter } { instead-filename } { \g_@@_filename_tl }
             \seq_map_break:
           }
       }
@@ -606,7 +606,7 @@
 \NewDocumentEnvironment { OnlySubAppendix } { +b }
   { }
   {
-    \bool_if:nT { \g_@@_active_bool && \g_@@_sub_mode_bool }
+    \bool_lazy_and:nnT { \g_@@_active_bool } { \g_@@_sub_mode_bool }
       {
         \@@_maybe_auto_open_stream:
         \iow_now:Nn \g_@@_write_iow { #1 }
@@ -621,7 +621,7 @@
 \NewDocumentEnvironment { OnlyMainAppendix } { +b }
   { }
   {
-    \bool_if:nT { \g_@@_active_bool && ! \g_@@_sub_mode_bool }
+    \bool_lazy_and:nnT { \g_@@_active_bool } { ! \g_@@_sub_mode_bool }
       {
         \@@_maybe_auto_open_stream:
         \iow_now:Nn \g_@@_write_iow { #1 }
