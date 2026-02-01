@@ -1,0 +1,25 @@
+\input{regression-test.tex}
+\documentclass{article}
+\usepackage[mode=main, auto-open-stream=true]{AppendixAfter}
+
+\begin{document}
+\START
+\TEST{auto-open-stream enabled}{
+  \typeout{--- Testing lazy stream opening ---}
+  \AppendixLine{First write triggers stream opening.}
+}
+
+\TEST{Multiple writes}{
+  \AppendixLine{Second line.}
+  \AppendixLine{Third line.}
+}
+
+\begin{AfterAppendix}
+  Content from AfterAppendix environment.
+\end{AfterAppendix}
+
+\OMIT
+\TIMO
+\SHOWFILE{\jobname.apx}
+
+\end{document}

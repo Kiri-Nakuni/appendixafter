@@ -1,0 +1,17 @@
+This is a generated file for the l3build validation system.
+Don't change this file in any respect.
+============================================================
+TEST 1: auto-open-stream enabled
+============================================================
+--- Testing lazy stream opening ---
+\g__appendix_after_write_iow=\write...
+============================================================
+============================================================
+TEST 2: Multiple writes
+============================================================
+============================================================
+-------- 03-auto-open-stream.apx (start) ---------
+(03-auto-open-stream.apx) [nl]
+-------- 03-auto-open-stream.apx (end) -----------
+Package AppendixAfter Warning: Appendix output file '' does not exist. Nothing to output.
+(03-auto-open-stream.aux)

@@ -1,0 +1,19 @@
+\input{regression-test.tex}
+\documentclass{article}
+\usepackage[mode=main, file=custom_appendix]{AppendixAfter}
+
+\begin{document}
+\START
+\TEST{Custom filename without extension}{
+  \AppendixLine{Content for custom filename.}
+}
+
+\TEST{Output with custom filename}{
+  \typeout{--- Custom filename test ---}
+}
+
+\OMIT
+\TIMO
+\SHOWFILE{custom_appendix.apx}
+
+\end{document}

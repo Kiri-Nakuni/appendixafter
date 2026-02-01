@@ -1,0 +1,21 @@
+\input{regression-test.tex}
+\documentclass{article}
+\usepackage[mode=main, auto-appendix=true]{AppendixAfter}
+
+\begin{document}
+\START
+\section{Main Section}
+
+\TEST{auto-appendix option enabled}{
+  Main document content.
+}
+
+\begin{AfterAppendix}
+  \section{Appendix Content}
+  This content should have \texttt{appendix} called before it.
+\end{AfterAppendix}
+
+\OMIT
+\TIMO
+
+\end{document}

@@ -1,0 +1,638 @@
+% \iffalse meta-comment
+%
+%<*readme>
+% AppendixAfter - Stream-based content delaying with docmute/BibLaTeX support
+% Copyright (C) 2026 Nakuni Kiri
+%</readme>
+%<*internal>
+\def\nameofplainTeX{plain}
+\ifx\fmtname\nameofplainTeX\else
+  \expandafter\begingroup
+\fi
+%</internal>
+%<*install>
+\input l3docstrip.tex
+\askforoverwritefalse
+\preamble
+  Copyright (C) 2026 Nakuni Kiri
+\endpreamble
+\postamble
+\endpostamble
+\generate{\file{AppendixAfter.sty}{\from{\jobname.dtx}{package}}}
+%</install>
+%<*internal>
+\ifx\fmtname\nameofplainTeX
+  \expandafter\endbatchfile
+\else
+  \expandafter\endgroup
+\fi
+%</internal>
+%
+%<*driver>
+\documentclass[full]{l3doc}
+\IfFileExists{AppendixAfter.sty}{\usepackage{AppendixAfter}}{}
+\usepackage{luatexja-preset}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\begin{document}
+  \DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+%
+% \title{\pkg{AppendixAfter}パッケージ}
+% \author{那国 霧}
+% \date{2026/02/01 v0.1.0}
+% \maketitle
+%
+% \begin{documentation}
+%
+% \section{はじめに}
+% \pkg{AppendixAfter}は、ドキュメント内のコンテンツ出力を遅延させ、
+% 特定の時点でまとめて出力するためのパッケージです。
+% 
+% \subsection{背景}
+% \pkg{docmute}パッケージを用いて複数のファイルを統合する際、
+% サブファイル単独でも、対応する付録を含めてコンパイルしたい場合があります。
+% そのような状況のために、本パッケージは、以下の機能を提供します：
+% \begin{itemize}
+%   \item コンテンツの遅延出力
+%   \item メインファイルとサブファイルでの条件付き出力の制御
+%   \item 安全なファイル名のチェック機能
+% \end{itemize}
+%
+% \section{要件}
+% \begin{itemize}
+%   \item \LaTeXe\ (2023/06/01以降)
+% \end{itemize}
+%
+% \section{使い方}
+%
+% \subsection{読み込みとオプション}
+% パッケージを読み込む際に、動作モードを指定できます。
+%
+% \begin{verbatim}
+% \usepackage[mode=main]{AppendixAfter}
+% \end{verbatim}
+%
+% 利用可能なオプションは以下の通りです：
+%
+% \begin{variable}{mode}
+%   動作モードを指定します。
+%   \begin{description}
+%     \item[\texttt{main}] メインファイルとしてコンパイルする場合に使用します。
+%     \item[\texttt{sub}] (デフォルト)サブファイル（\cs{input}される側）としてコンパイルする場合に使用します。
+%     \item[\texttt{off}] 機能を無効化します。
+%   \end{description}
+% \end{variable}
+%
+% \begin{variable}{file}
+%   \begin{syntax}
+%     file = \meta{filename}
+%   \end{syntax}
+%   遅延コンテンツを保存する一時ファイルの名前を指定します。
+%   デフォルトは\mbox{\cs{c_sys_jobname_str}\texttt{.apx}}です。
+% \end{variable}
+%
+% \begin{variable}{auto-appendix}
+%   \begin{syntax}
+%     auto-appendix = \meta{bool}
+%   \end{syntax}
+%   \texttt{true} (デフォルト)の場合、出力時に自動的に\cs{appendix}と\cs{clearpage}を発行します。
+% \end{variable}
+%
+% \begin{variable}{auto-open-stream}
+%   \begin{syntax}
+%     auto-open-stream = \meta{bool}
+%   \end{syntax}
+%   \texttt{true}の場合、最初の書き込みコマンドが実行された時点で必要に応じてストリームを開きます。
+%   \texttt{false} (デフォルト)の場合、ドキュメント開始時（\texttt{begindocument}）に即座にストリームを開きます。
+%   書き込み内容がない場合に空のファイルを生成したくないときは、\texttt{true}に設定してください。
+% \end{variable}
+%
+% \subsection{コマンドと環境}
+%
+% \begin{function}{\AppendixInput}
+%   \begin{syntax}
+%     \cs{AppendixInput} \oarg{filename} \Arg{filename}
+%   \end{syntax}
+%   指定されたファイルを読み込み、その内容を付録出力用のファイルに記録します。
+%   オプション引数は、サブモード時に使用するファイルパスを指定します。
+%   メインモードでは常に第2引数のパスが使用されます。
+%   オプション引数を省略した場合、主引数のパスを利用します。
+% \end{function}
+%
+% \begin{function}{\inputdualpath}
+%   \begin{syntax}
+%     \cs{inputdualpath} \oarg{sub\_path} \Arg{main\_path}
+%   \end{syntax}
+%   メインファイルからコンパイルしているか、サブファイル単体でコンパイルしているかによって、
+%   読み込むパスを切り替えるためのコマンドです。
+%   引数の取り方は\cs{AppendixInput}と同様です。
+% \end{function}
+%
+% \begin{function}{\AppendixLine}
+%   \begin{syntax}
+%     \cs{AppendixLine} \Arg{line}
+%   \end{syntax}
+%   引数で与えられたテキストを、そのまま補助ファイルに書き込みます。
+%   コマンドの動的な生成などに使用できます。
+%   \cs{par}は自動的には追加されないため、必要に応じて明示的に指定してください。
+% \end{function}
+%
+% \begin{function}{AfterAppendix}
+%   \begin{syntax}
+%     \begin{env}{AfterAppendix}
+%       \meta{content}
+%     \end{env}
+%   \end{syntax}
+%   環境内のコンテンツを補助ファイルに記録します。
+%   この環境内では\cs{verb}コマンドや\env{verbatim}環境は利用できません。
+%   \footnote{これは、環境の引数が読み込まれる段階でトークン化が行われてしまい、
+%   カテゴリーコードの変更が適用できないためです。}
+% \end{function}
+%
+% \begin{function}{OnlySubAppendix, OnlyMainAppendix}
+%   \begin{syntax}
+%     \begin{env}{OnlySubAppendix}
+%       \meta{content}
+%     \end{env}
+%     \begin{env}{OnlyMainAppendix}
+%       \meta{content}
+%     \end{env}
+%   \end{syntax}
+%   これらの環境は、現在の\texttt{mode}に応じて条件付きでコンテンツを補助ファイルに書き込みます。
+%   特定のモードでのみ表示させたい情報がある場合に便利です。
+%   \env{OnlySubAppendix}はサブモード時のみ、\env{OnlyMainAppendix}はメインモード時のみ出力されます。
+% \end{function}
+%
+% \begin{function}{\OutputAppendix}
+%   \begin{syntax}
+%     \cs{OutputAppendix}
+%   \end{syntax}
+%   保存されたコンテンツをその場で強制的に出力します。
+%   通常はドキュメント末尾で自動的に呼ばれますが、手動で制御したい場合に使用します。
+%   一度出力した後は、再度呼び出しても何も出力されません。
+% \end{function}
+%
+% \section{使用例}
+%
+% \subsection{基本的な使い方}
+%
+% メインファイルでは以下のように記述します：
+% \begin{verbatim}
+% \documentclass{article}
+% \usepackage[mode=main]{AppendixAfter}
+% \usepackage{docmute}
+% \begin{document}
+% \section{本文}
+% 本文の内容。
+% \input{./section1/subfile.tex}
+% \begin{AfterAppendix}
+% \section{謝辞}
+% この部分は付録より後に出力されます。
+% \end{AfterAppendix}
+% \end{document}
+% \end{verbatim}
+%
+% サブファイルでは以下のように記述します：
+% \begin{verbatim}
+% \documentclass{article}
+% \usepackage{AppendixAfter}
+% \begin{document}
+% \section{サブファイルの内容}
+% サブファイルの本文。
+% \AppendixInput[appendix.tex]{./section1/appendix.tex}
+% \end{document}
+% \end{verbatim}
+%
+% \end{documentation}
+%
+% \begin{implementation}
+% \section{実装}
+%
+% \subsection{パッケージ宣言}
+%
+%    \begin{macrocode}
+%<*package>
+%<@@=appendix_after>
+\NeedsTeXFormat{LaTeX2e}[2023/06/01]
+\ProvidesExplPackage
+  {AppendixAfter}
+  {2026/02/01}
+  {0.1.0}
+  {Stream-based content delaying with docmute support}
+%    \end{macrocode}
+%
+% \subsection{変数の宣言}
+%
+% \begin{variable}{\g_@@_active_bool}
+%   パッケージが有効かどうかを示すフラグです。
+%   \texttt{mode=off}の場合は\texttt{false}、それ以外は\texttt{true}になります。
+%    \begin{macrocode}
+\bool_new:N \g_@@_active_bool
+%    \end{macrocode}
+% \end{variable}
+%
+% \begin{variable}{\g_@@_sub_mode_bool}
+%   サブモードかどうかを示すフラグです。
+%   \texttt{mode=sub}の場合は\texttt{true}、\texttt{mode=main}の場合は\texttt{false}になります。
+%    \begin{macrocode}
+\bool_new:N \g_@@_sub_mode_bool
+%    \end{macrocode}
+% \end{variable}
+%
+% \begin{variable}{\g_@@_auto_appendix_bool}
+%   出力時に自動的に\cs{appendix}と\cs{clearpage}を発行するかどうかを示すフラグです。
+%    \begin{macrocode}
+\bool_new:N \g_@@_auto_appendix_bool
+%    \end{macrocode}
+% \end{variable}
+%
+% \begin{variable}{\g_@@_auto_open_stream_bool}
+%   書き込みが必要になるまでストリームを開かないかどうかを示すフラグです。
+%    \begin{macrocode}
+\bool_new:N \g_@@_auto_open_stream_bool
+%    \end{macrocode}
+% \end{variable}
+%
+% \begin{variable}{\g_@@_already_output_bool}
+%   既に付録を出力したかどうかを示すフラグです。
+%   重複出力を防ぐために使用されます。
+%    \begin{macrocode}
+\bool_new:N \g_@@_already_output_bool
+%    \end{macrocode}
+% \end{variable}
+%
+% \begin{variable}{\g_@@_stream_is_open_bool}
+%   出力ストリームが開いているかどうかを示すフラグです。
+%    \begin{macrocode}
+\bool_new:N \g_@@_stream_is_open_bool
+%    \end{macrocode}
+% \end{variable}
+%
+% \begin{variable}{\g_@@_raw_filename_tl, \g_@@_filename_tl}
+%   |\g_@@_raw_filename_tl|はユーザーが指定した生のファイル名です。
+%   |\g_@@_filename_tl|は拡張子チェック後の最終的なファイル名です。
+%    \begin{macrocode}
+\tl_new:N   \g_@@_raw_filename_tl
+\tl_new:N   \g_@@_filename_tl
+%    \end{macrocode}
+% \end{variable}
+%
+% \begin{variable}{\g_@@_write_iow}
+%   遅延出力用の書き込みストリームです。
+%    \begin{macrocode}
+\iow_new:N  \g_@@_write_iow
+%    \end{macrocode}
+% \end{variable}
+%
+% \begin{variable}{\g_@@_unsafe_ext_seq}
+%   使用を禁止する拡張子のリストです。
+%    \begin{macrocode}
+\seq_new:N  \g_@@_unsafe_ext_seq
+\seq_gset_from_clist:Nn \g_@@_unsafe_ext_seq
+  { 
+    tex, sty, cls, aux, log, toc, bbl,
+    pdf, lua, zip, gz, tar, png, jpeg, jpg, eps, ps, dvi,
+    bmp, gif, tif, tiff, svg, mp4, mp3, wav, avi, mkv,
+    exe, dll, so, dylib, sh, bat, cmd, bin 
+  }
+%    \end{macrocode}
+% \end{variable}
+%
+% \begin{variable}{\l_@@_ext_tl, \l_@@_raw_fileext_tl, \l_@@_filename_seq}
+%   ファイル名の解析に使用するローカル変数です。
+%    \begin{macrocode}
+\tl_new:N   \l_@@_ext_tl
+\tl_new:N   \l_@@_raw_fileext_tl
+\seq_new:N  \l_@@_filename_seq
+%    \end{macrocode}
+% \end{variable}
+%
+% \subsection{キーの定義}
+%
+%    \begin{macrocode}
+\keys_define:nn { AppendixAfter }
+  {
+    mode .choice:,
+    mode / main .code:n = {
+            \bool_gset_true:N  \g_@@_active_bool
+            \bool_gset_false:N \g_@@_sub_mode_bool
+        },
+    mode / sub  .code:n = {
+            \bool_gset_true:N \g_@@_active_bool
+            \bool_gset_true:N \g_@@_sub_mode_bool
+        },
+    mode / off  .code:n = {
+            \bool_gset_false:N \g_@@_active_bool
+            \bool_gset_false:N \g_@@_sub_mode_bool
+        },
+    mode .initial:n = sub,
+
+    file .tl_set:N   = \g_@@_raw_filename_tl,
+    file .initial:n  = { \c_sys_jobname_str.apx },
+
+    auto-appendix .bool_set:N = \g_@@_auto_appendix_bool,
+    auto-appendix .default:n  = true,
+    auto-appendix .initial:n  = true,
+
+    auto-open-stream .bool_set:N = \g_@@_auto_open_stream_bool,
+    auto-open-stream .default:n  = true,
+    auto-open-stream .initial:n  = false,
+
+    unknown .code:n  = {
+      \msg_error:nnn
+        { AppendixAfter }
+        { unknown-option }
+        { \l_keys_key_tl }
+    }
+  }
+
+\ProcessKeyOptions
+%    \end{macrocode}
+%
+% \subsection{メッセージの定義}
+%
+%    \begin{macrocode}
+\msg_new:nnn { AppendixAfter } { unknown-option }
+  { Unknown~option~'#1'. }
+\msg_new:nnn { AppendixAfter } { write-disabled }
+  { Appendix~recording~is~disabled.~(mode=off) }
+\msg_new:nnn { AppendixAfter } { unsafe-extension }
+  { File~extension~'#1'~is~not~allowed~for~safety~reasons. }
+\msg_new:nnn { AppendixAfter } { instead-filename }
+  { Writing~to~safe~path~'#1'~instead }
+\msg_new:nnn { AppendixAfter } { file-not-found }
+  { AppendixInput:~File~'#1'~not~found.~(Mode:~#2) }
+\msg_new:nnn { AppendixAfter } { output-file-missing }
+  { Appendix~output~file~'#1'~does~not~exist.~Nothing~to~output. }
+%    \end{macrocode}
+%
+% \subsection{内部関数}
+%
+% \begin{macro}{\@@_check_filename:}
+%   ファイル名に拡張子が含まれているかを確認し、含まれていない場合は
+%   \texttt{.apx}を追加します。
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_check_filename:
+  {
+    \tl_if_in:NnTF \g_@@_raw_filename_tl { . }
+      {
+        \tl_set_eq:NN \g_@@_filename_tl \g_@@_raw_filename_tl
+      }
+      {
+        \tl_set:Nx \g_@@_filename_tl { \g_@@_raw_filename_tl.apx }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_check_fileext:}
+%   ファイル名の拡張子が安全なものかどうかをチェックします。
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_check_fileext:
+  {
+    \tl_clear:N \l_@@_raw_fileext_tl
+    \seq_set_split:NnV \l_@@_filename_seq { . } \g_@@_filename_tl
+    \seq_get_right:NN \l_@@_filename_seq \l_@@_raw_fileext_tl
+    \tl_set:Nx \l_@@_ext_tl { \str_foldcase:V \l_@@_raw_fileext_tl }
+    
+    \seq_map_inline:Nn \g_@@_unsafe_ext_seq
+      {
+        \str_if_eq:VnT \l_@@_ext_tl { ##1 }
+          { 
+            \tl_set:Nx \l_tmpa_tl { \g_@@_filename_tl .apx }
+            \tl_set:Nx \g_@@_filename_tl { \l_tmpa_tl }
+            \msg_error:nnx { AppendixAfter } { unsafe-extension } { \l_@@_ext_tl }
+            \msg_error:nnx { AppendixAfter } { instead-filename } { \g_@@_filename_tl }
+            \seq_map_break:
+          }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_open_stream:}
+%   出力ストリームを開きます。
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_open_stream:
+  {
+    \bool_if:NF \g_@@_stream_is_open_bool
+      {
+        \@@_check_filename:
+        \@@_check_fileext:
+        \iow_open:NV \g_@@_write_iow \g_@@_filename_tl
+        \bool_gset_true:N \g_@@_stream_is_open_bool
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_maybe_auto_open_stream:}
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_maybe_auto_open_stream:
+  {
+    \bool_lazy_and:nnT
+      { \g_@@_active_bool }
+      { \g_@@_auto_open_stream_bool }
+      { \@@_open_stream: }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_close_stream:}
+%   出力ストリームを閉じます。
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_close_stream:
+  {
+    \bool_if:NT \g_@@_stream_is_open_bool
+      {
+        \iow_close:N \g_@@_write_iow
+        \bool_gset_false:N \g_@@_stream_is_open_bool
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_output_content:}
+%   保存されたコンテンツを出力します。
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_output_content:
+  {
+    \bool_lazy_and:nnT
+      { \g_@@_active_bool }
+      { ! \g_@@_already_output_bool }
+      {
+        \@@_close_stream:
+        \exp_args:NV \file_if_exist:nTF \g_@@_filename_tl
+          {
+            \bool_if:NT \g_@@_auto_appendix_bool { \clearpage \appendix }
+            \file_input:V \g_@@_filename_tl
+          }
+          {
+            \msg_warning:nnV { AppendixAfter } { output-file-missing } \g_@@_filename_tl
+          }
+        \bool_gset_true:N \g_@@_already_output_bool
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{フック}
+%
+%    \begin{macrocode}
+\AddToHook{begindocument}
+  { 
+    \bool_lazy_and:nnT
+      { \g_@@_active_bool }
+      { ! \g_@@_auto_open_stream_bool }
+      { \@@_open_stream: }
+  }
+\AddToHook{enddocument}
+  {
+    \bool_if:NT \g_@@_active_bool { \@@_output_content: }
+  }
+%    \end{macrocode}
+%
+% \subsection{ユーザーコマンド}
+%
+% \begin{macro}{\AppendixInput}
+%   ファイルを読み込み、その内容を補助ファイルに記録します。
+%    \begin{macrocode}
+\NewDocumentCommand \AppendixInput { o m }
+  {
+    \bool_if:NT \g_@@_active_bool
+      {
+        \@@_maybe_auto_open_stream:
+        \bool_if:NTF \g_@@_sub_mode_bool
+          {
+            \IfNoValueTF{#1}
+              { \tl_set:Nn \l_tmpa_tl { #2 } }
+              { \tl_set:Nn \l_tmpa_tl { #1 } }
+            \tl_set:Nn \l_tmpb_tl { sub }
+          }
+          {
+            \tl_set:Nn \l_tmpa_tl { #2 }
+            \tl_set:Nn \l_tmpb_tl { main }
+          }
+
+        \file_if_exist:VTF \l_tmpa_tl
+          {
+            \iow_now:Nx \g_@@_write_iow 
+              {
+                \token_to_str:N \input { \tl_to_str:V \l_tmpa_tl }
+              }
+          }
+          {
+            \msg_warning:nnxx { AppendixAfter } { file-not-found }
+              { \l_tmpa_tl } { \l_tmpb_tl }
+          }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\inputdualpath}
+%    \begin{macrocode}
+\NewDocumentCommand \inputdualpath { o m }
+  {
+    \bool_if:NT \g_@@_active_bool
+      {
+        \bool_if:NTF \g_@@_sub_mode_bool
+          {
+            \IfNoValueTF{#1}
+              { \tl_set:Nn \l_tmpa_tl { #2 } }
+              { \tl_set:Nn \l_tmpa_tl { #1 } }
+            \tl_set:Nn \l_tmpb_tl { sub }
+          }
+          {
+            \tl_set:Nn \l_tmpa_tl { #2 }
+            \tl_set:Nn \l_tmpb_tl { main }
+          }
+
+        \file_if_exist:VTF \l_tmpa_tl
+          { \file_input:V \l_tmpa_tl }
+          {
+            \msg_warning:nnxx { AppendixAfter } { file-not-found }
+              { \l_tmpa_tl } { \l_tmpb_tl }
+          }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\AppendixLine}
+%   1行のテキストを補助ファイルに書き込みます。
+%    \begin{macrocode}
+\NewDocumentCommand \AppendixLine { m }
+  {
+    \bool_if:NTF \g_@@_active_bool
+      { 
+        \@@_maybe_auto_open_stream:
+        \iow_now:Nn \g_@@_write_iow { #1 } 
+      }
+      { \msg_warning:nn { AppendixAfter } { write-disabled } }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\OutputAppendix}
+%    \begin{macrocode}
+\NewDocumentCommand \OutputAppendix { } { \@@_output_content: }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{environment}{AfterAppendix}
+%   環境内のコンテンツを補助ファイルに保存します。
+%    \begin{macrocode}
+\NewDocumentEnvironment { AfterAppendix } { +b }
+  { }
+  {
+    \bool_if:NTF \g_@@_active_bool
+      {
+        \@@_maybe_auto_open_stream:
+        \iow_now:Nn \g_@@_write_iow { #1 }
+        \iow_now:Nn \g_@@_write_iow { \par }
+      }
+      { \msg_warning:nn { AppendixAfter } { write-disabled } }
+  }
+%    \end{macrocode}
+% \end{environment}
+%
+% \begin{environment}{OnlySubAppendix}
+%    \begin{macrocode}
+\NewDocumentEnvironment { OnlySubAppendix } { +b }
+  { }
+  {
+    \bool_if:nT { \g_@@_active_bool && \g_@@_sub_mode_bool }
+      {
+        \@@_maybe_auto_open_stream:
+        \iow_now:Nn \g_@@_write_iow { #1 }
+        \iow_now:Nn \g_@@_write_iow { \par }
+      }
+  }
+%    \end{macrocode}
+% \end{environment}
+%
+% \begin{environment}{OnlyMainAppendix}
+%    \begin{macrocode}
+\NewDocumentEnvironment { OnlyMainAppendix } { +b }
+  { }
+  {
+    \bool_if:nT { \g_@@_active_bool && ! \g_@@_sub_mode_bool }
+      {
+        \@@_maybe_auto_open_stream:
+        \iow_now:Nn \g_@@_write_iow { #1 }
+        \iow_now:Nn \g_@@_write_iow { \par }
+      }
+  }
+%    \end{macrocode}
+% \end{environment}
+%
+%</package>
+%
+% \end{implementation}
+%
+% \Finale

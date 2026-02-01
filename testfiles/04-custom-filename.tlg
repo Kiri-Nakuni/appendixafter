@@ -1,0 +1,17 @@
+This is a generated file for the l3build validation system.
+Don't change this file in any respect.
+============================================================
+TEST 1: Custom filename without extension
+============================================================
+============================================================
+============================================================
+TEST 2: Output with custom filename
+============================================================
+--- Custom filename test ---
+============================================================
+-------- custom_appendix.apx (start) ---------
+(custom_appendix.apx) [nl]
+-------- custom_appendix.apx (end) -----------
+(custom_appendix.apx)
+[1
+] (04-custom-filename.aux)

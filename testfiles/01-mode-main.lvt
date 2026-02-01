@@ -1,0 +1,26 @@
+\input{regression-test.tex}
+\documentclass{article}
+\usepackage{docmute}
+\usepackage[mode=main, file=test_main.tex]{AppendixAfter}
+
+\begin{document}
+\START
+HOGE
+\TEST{File Search and Loading Position}{
+  \typeout{--- Before AppendixInput ---}
+  \AppendixInput{subfile.tex}
+  \typeout{--- After AppendixInput ---}
+}
+\AppendixLine{Line directly written to appendix.}
+
+\begin{AfterAppendix}
+  hoge
+\end{AfterAppendix}
+
+FUGA
+\OMIT
+\newpage
+\TIMO
+\SHOWFILE{test_main.apx}
+
+\end{document}

@@ -1,0 +1,19 @@
+\input{regression-test.tex}
+\documentclass{article}
+\usepackage[mode=off]{AppendixAfter}
+
+\begin{document}
+\START
+\TEST{mode=off disables functionality}{
+  \typeout{--- Testing off mode ---}
+}
+\AppendixLine{This should warn (mode=off).}
+
+\begin{AfterAppendix}
+  This should also warn (mode=off).
+\end{AfterAppendix}
+
+\OMIT
+\TIMO
+
+\end{document}

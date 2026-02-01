@@ -1,0 +1,33 @@
+\input{regression-test.tex}
+\documentclass{article}
+\usepackage[mode=sub]{AppendixAfter}
+\usepackage{docmute}
+\begin{document}
+\START
+\TEST{Sub mode basic functionality}{
+  \typeout{--- Sub mode test started ---}
+}
+
+\begin{AfterAppendix}
+  This is content in sub mode.
+\end{AfterAppendix}
+
+\TEST{OnlySubAppendix environment}{
+  \begin{OnlySubAppendix}
+    This should appear (sub mode only).
+  \end{OnlySubAppendix}
+}
+\AppendixInput[subfile.tex]{dummy.text}
+\TEST{OnlyMainAppendix environment}{
+  \begin{OnlyMainAppendix}
+    This should NOT appear (main mode only).
+  \end{OnlyMainAppendix}
+}
+
+\AppendixLine{Direct line in sub mode.}
+
+\OMIT
+\TIMO
+\SHOWFILE{\jobname.apx}
+
+\end{document}
