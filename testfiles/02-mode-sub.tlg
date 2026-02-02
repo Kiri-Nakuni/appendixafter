@@ -14,10 +14,15 @@ TEST 2: OnlySubAppendix environment
 TEST 3: OnlyMainAppendix environment
 ============================================================
 ============================================================
--------- 02-mode-sub.apx (start) ---------
-(02-mode-sub.apx) [nl]
--------- 02-mode-sub.apx (end) -----------
 [1
 ] (02-mode-sub.apx (subfile.tex))
+-------- 02-mode-sub.apx (start) ---------
+(02-mode-sub.apx) This is content in sub mode.[nl]
+\par[nl]
+This should appear (sub mode only).[nl]
+\par[nl]
+\input{subfile.tex}[nl]
+Direct line in sub mode.[nl]
+-------- 02-mode-sub.apx (end) -----------
 [2
 ] (02-mode-sub.aux)

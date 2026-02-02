@@ -1,0 +1,16 @@
+\input{regression-test.tex}
+\documentclass{article}
+\usepackage[mode=main]{AppendixAfter}
+
+\begin{document}
+\START
+\TEST{Manual OutputAppendix}{
+  \AppendixLine{Content before manual output.}
+  \OutputAppendix
+  \typeout{--- After first OutputAppendix ---}
+  \OutputAppendix
+  \typeout{--- After second OutputAppendix (should do nothing) ---}
+}
+\OMIT
+\TIMO
+\end{document}

@@ -29,6 +29,7 @@
 
 \OMIT
 \TIMO
+\OutputAppendix
 \SHOWFILE{\jobname.apx}
 
 \end{document}

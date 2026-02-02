@@ -1,0 +1,12 @@
+\input{regression-test.tex}
+\documentclass{article}
+\usepackage[mode=main, auto-appendix=false]{AppendixAfter}
+
+\begin{document}
+\START
+\TEST{auto-appendix disabled}{
+  \AppendixLine{Content without auto appendix command.}
+}
+\OMIT
+\TIMO
+\end{document}

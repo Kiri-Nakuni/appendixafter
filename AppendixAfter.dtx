@@ -220,7 +220,7 @@
 \NeedsTeXFormat{LaTeX2e}[2023/06/01]
 \ProvidesExplPackage
   {AppendixAfter}
-  {2026/02/01}
+  {2026/02/02}
   {0.1.2}
   {Stream-based content delaying with docmute support}
 %    \end{macrocode}
@@ -304,11 +304,11 @@
 % \begin{variable}{\l_@@_ext_tl, \l_@@_raw_fileext_tl, \l_@@_filename_seq}
 %   ファイル名の解析に使用するローカル変数です。
 %    \begin{macrocode}
-\tl_new:N   \l_@@_ext_tl
-\tl_new:N   \l_@@_raw_fileext_tl
-\tl_new:N   \l_@@_filepath_tl
-\tl_new:N   \l_@@_modename_tl
-\seq_new:N  \l_@@_filename_seq
+\tl_new:N   \l_@@_ext_tl         % 小文字化した拡張子
+\tl_new:N   \l_@@_raw_fileext_tl % 生の拡張子
+\tl_new:N   \l_@@_filepath_tl    % パス分割用
+\tl_new:N   \l_@@_modename_tl    % 処理済みパス
+\seq_new:N  \l_@@_filename_seq   % "main"/"sub"
 %    \end{macrocode}
 % \end{variable}
 %
@@ -372,7 +372,6 @@
 %    \end{macrocode}
 %
 % \subsection{内部関数}
-%
 % \begin{macro}{\@@_check_filename:}
 %   ファイル名に拡張子が含まれているかを確認し、含まれていない場合は
 %   \texttt{.apx}を追加します。
@@ -586,7 +585,7 @@
       { ! \g_@@_already_output_bool }
       {
         \@@_close_stream:
-        \exp_args:NV \file_if_exist:nTF \g_@@_filename_tl
+        \file_if_exist:VTF \g_@@_filename_tl
           {
             \bool_if:NT \g_@@_auto_appendix_bool { \clearpage \appendix }
             \file_input:V \g_@@_filename_tl

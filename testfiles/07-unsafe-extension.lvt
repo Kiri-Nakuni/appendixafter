@@ -1,0 +1,14 @@
+\input{regression-test.tex}
+\documentclass{article}
+\usepackage[mode=main, file=output.tex]{AppendixAfter}
+
+\begin{document}
+\START
+\TEST{Unsafe extension should be rejected}{
+  \AppendixLine{This should go to output.tex.apx}
+}
+\OMIT
+\TIMO
+\OutputAppendix
+\SHOWFILE{output.tex.apx}
+\end{document}

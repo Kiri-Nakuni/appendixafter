@@ -9,9 +9,9 @@ TEST 2: Output with custom filename
 ============================================================
 --- Custom filename test ---
 ============================================================
--------- custom_appendix.apx (start) ---------
-(custom_appendix.apx) [nl]
--------- custom_appendix.apx (end) -----------
 (custom_appendix.apx)
+-------- custom_appendix.apx (start) ---------
+(custom_appendix.apx) Content for custom filename.[nl]
+-------- custom_appendix.apx (end) -----------
 [1
 ] (04-custom-filename.aux)

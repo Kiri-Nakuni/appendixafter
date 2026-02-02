@@ -6,5 +6,9 @@ TEST 1: auto-appendix option enabled
 ============================================================
 [1
 ] (05-auto-appendix.apx)
+-------- 05-auto-appendix.apx (start) ---------
+(05-auto-appendix.apx) \section {Appendix Content} This content should have \texttt {appendix} called before it.[nl]
+\par[nl]
+-------- 05-auto-appendix.apx (end) -----------
 [2
 ] (05-auto-appendix.aux)
