@@ -18,6 +18,7 @@
   \end{OnlySubAppendix}
 }
 \AppendixInput[subfile.tex]{dummy.text}
+\inputdualpath[subfile.tex]{dummy.text}
 \TEST{OnlyMainAppendix environment}{
   \begin{OnlyMainAppendix}
     This should NOT appear (main mode only).

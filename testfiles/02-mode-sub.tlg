@@ -9,6 +9,7 @@ TEST 1: Sub mode basic functionality
 TEST 2: OnlySubAppendix environment
 ============================================================
 ============================================================
+(subfile.tex)
 ============================================================
 TEST 3: OnlyMainAppendix environment
 ============================================================
@@ -16,6 +17,7 @@ TEST 3: OnlyMainAppendix environment
 -------- 02-mode-sub.apx (start) ---------
 (02-mode-sub.apx) [nl]
 -------- 02-mode-sub.apx (end) -----------
-(02-mode-sub.apx (subfile.tex))
 [1
+] (02-mode-sub.apx (subfile.tex))
+[2
 ] (02-mode-sub.aux)
