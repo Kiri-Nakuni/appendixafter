@@ -422,6 +422,17 @@
 % \end{macro}
 %
 % \begin{macro}{\@@_process_input:nnN}
+%   ユーザー向けコマンドで共通に利用する「パス選択+存在確認+処理」関数です。
+%
+%   \begin{arguments}
+%     \item[\#1] サブモード時にのみ有効な代替パス（任意）。省略されているなら\#2を使用します。
+%     \item[\#2] メインモード時（および\#1省略時）のパス。
+%     \item[\#3] ファイルが存在した場合に実行する処理（引数なしの実行トークン列）。
+%   \end{arguments}
+%
+%   本関数は、\cs{l_@@_filepath_tl} に最終的に採用されたパスを格納し、
+%   さらに \cs{l_@@_modename_tl} に \texttt{main} または \texttt{sub} を格納します。
+%   パッケージが無効（\texttt{mode=off}）なら警告を出して何もしません。
 %    \begin{macrocode}
 \cs_new_protected:Npn \@@_process_input:nnN #1#2#3
   {
@@ -453,6 +464,8 @@
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\@@_appendix_input:}
+%   \cs{\@@_process_input:nnN} で決定した \cs{l_@@_filepath_tl} を用いて、
+%   そのファイルを後で読み込むための \cs{input} 行を補助ファイルへ書き込みます。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_appendix_input:
   {
@@ -465,24 +478,40 @@
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\@@_input_dual_path:}
+%   \cs{\@@_process_input:nnN} で決定したパス（\cs{l_@@_filepath_tl}）を、
+%   その場で通常の入力として読み込みます。
+%   \cs{AppendixInput} と異なり、補助ファイルへの記録は行いません。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_input_dual_path:
   { \file_input:V \l_@@_filepath_tl }
 %    \end{macrocode}
 % \end{macro}
-% \begin{macro}{\@@_after_appendix:NNn}
+% \begin{macro}{\@@_after_appendix:nn}
+%   第1引数の条件（真偽式）が真のときに限り、第2引数の内容を補助ファイルに書き込みます。
+%
+%   \begin{arguments}
+%     \item[\#1] 記録するかどうかの条件（例：\cs{g_@@_active_bool} や \cs{g_@@_sub_mode_bool}）。
+%     \item[\#2] 補助ファイルに書き込む内容（環境本文など）。
+%   \end{arguments}
+%
+%   書き込みの最後に \cs{par} を1つ追加します。
+%   これにより、環境本文を連結したときの段落境界が自然になるようにしています。
 %    \begin{macrocode}
 \cs_new_protected:Npn \@@_after_appendix:nn #1#2
   {
     \bool_if:NTF
       \g_@@_active_bool
       { 
-        \bool_if:nTF
+        \bool_if:nT
           { #1 }
           {
             \@@_maybe_auto_open_stream:
-            \iow_now:Nn \g_@@_write_iow { #2 }
-            \iow_now:Nn \g_@@_write_iow { \par }
+            \iow_now:Nn
+              \g_@@_write_iow
+              { #2 }
+            \iow_now:Nn
+              \g_@@_write_iow
+              { \par }
           }
       }
       {
@@ -492,8 +521,13 @@
       }
   }
 %    \end{macrocode}
+% \end{macro}
 % \begin{macro}{\@@_open_stream:}
 %   出力ストリームを開きます。
+%   まだ開いていない場合にのみ実行され、二重オープンを防ぎます。
+%
+%   オープン前に \cs{\@@_check_filename:} と \cs{\@@_check_fileext:} を呼び、
+%   拡張子の補完と安全性チェックを行った上で \cs{iow_open:NV} で書き込み先を確定します。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_open_stream:
   {
@@ -509,6 +543,8 @@
 % \end{macro}
 %
 % \begin{macro}{\@@_maybe_auto_open_stream:}
+%   \texttt{auto-open-stream=true} のときに、必要になった瞬間だけストリームを開くための補助関数です。
+%   パッケージが有効で、かつ遅延オープンが有効な場合にのみ \cs{\@@_open_stream:} を実行します。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_maybe_auto_open_stream:
   {
@@ -522,6 +558,7 @@
 %
 % \begin{macro}{\@@_close_stream:}
 %   出力ストリームを閉じます。
+%   開いていない場合は何もしません。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_close_stream:
   {
@@ -536,6 +573,11 @@
 %
 % \begin{macro}{\@@_output_content:}
 %   保存されたコンテンツを出力します。
+%   \cs{OutputAppendix} および \texttt{enddocument} フックから呼ばれるため、
+%   \cs{g_@@_already_output_bool} により「一度だけ」出力されます。
+%
+%   出力前にストリームを閉じ、出力ファイルが存在すれば \cs{file_input:V} で読み込みます。
+%   \texttt{auto-appendix=true} の場合は、その直前に \cs{clearpage} と \cs{appendix} を発行します。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_output_content:
   {
