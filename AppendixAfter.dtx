@@ -1,7 +1,7 @@
 % \iffalse meta-comment
 %
 %<*readme>
-% AppendixAfter - Stream-based content delaying with docmute/BibLaTeX support
+% AppendixAfter - Content delaying with docmute support
 % Copyright (C) 2026 Nakuni Kiri
 %</readme>
 %<*internal>
@@ -30,7 +30,7 @@
 %
 %<*driver>
 \documentclass[full]{l3doc}
-\IfFileExists{AppendixAfter.sty}{\usepackage{AppendixAfter}}{}
+\usepackage{AppendixAfter}
 \usepackage{luatexja-preset}
 \EnableCrossrefs
 \CodelineIndex
@@ -43,7 +43,7 @@
 %
 % \title{\pkg{AppendixAfter}パッケージ}
 % \author{那国 霧}
-% \date{2026/02/01 v0.1.1}
+% \date{2026/02/02 v0.1.2}
 % \maketitle
 %
 % \begin{documentation}
@@ -221,7 +221,7 @@
 \ProvidesExplPackage
   {AppendixAfter}
   {2026/02/01}
-  {0.1.1}
+  {0.1.2}
   {Stream-based content delaying with docmute support}
 %    \end{macrocode}
 %
@@ -288,11 +288,10 @@
 %    \end{macrocode}
 % \end{variable}
 %
-% \begin{variable}{\g_@@_unsafe_ext_seq}
+% \begin{variable}{\c_@@_unsafe_ext_clist}
 %   使用を禁止する拡張子のリストです。
 %    \begin{macrocode}
-\seq_new:N  \g_@@_unsafe_ext_seq
-\seq_gset_from_clist:Nn \g_@@_unsafe_ext_seq
+\clist_const:Nn \c_@@_unsafe_ext_clist
   { 
     tex, sty, cls, aux, log, toc, bbl,
     pdf, lua, zip, gz, tar, png, jpeg, jpg, eps, ps, dvi,
@@ -307,6 +306,8 @@
 %    \begin{macrocode}
 \tl_new:N   \l_@@_ext_tl
 \tl_new:N   \l_@@_raw_fileext_tl
+\tl_new:N   \l_@@_filepath_tl
+\tl_new:N   \l_@@_modename_tl
 \seq_new:N  \l_@@_filename_seq
 %    \end{macrocode}
 % \end{variable}
@@ -399,21 +400,98 @@
     \seq_get_right:NN \l_@@_filename_seq \l_@@_raw_fileext_tl
     \tl_set:Nx \l_@@_ext_tl { \str_foldcase:V \l_@@_raw_fileext_tl }
     
-    \seq_map_inline:Nn \g_@@_unsafe_ext_seq
+    \clist_map_inline:Nn \c_@@_unsafe_ext_clist
       {
         \str_if_eq:VnT \l_@@_ext_tl { ##1 }
           { 
             \tl_set:Nx \l_tmpa_tl { \g_@@_filename_tl .apx }
             \tl_set:Nx \g_@@_filename_tl { \l_tmpa_tl }
-            \msg_error:nnx { AppendixAfter } { unsafe-extension } { \l_@@_ext_tl }
-            \msg_info:nnx { AppendixAfter } { instead-filename } { \g_@@_filename_tl }
-            \seq_map_break:
+            \msg_error:nnx
+              { AppendixAfter }
+              { unsafe-extension }
+              { \l_@@_ext_tl }
+            \msg_info:nnx
+              { AppendixAfter }
+              { instead-filename }
+              { \g_@@_filename_tl }
+            \clist_map_break:
           }
       }
   }
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{\@@_process_input:nnN}
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_process_input:nnN #1#2#3
+  {
+    \bool_if:NTF
+      \g_@@_active_bool
+      {
+        \bool_if:NTF \g_@@_sub_mode_bool
+          {
+            \IfNoValueTF{ #1 }
+              { \tl_set:Nn \l_@@_filepath_tl { #2 } }
+              { \tl_set:Nn \l_@@_filepath_tl { #1 } }
+            \tl_set:Nn \l_@@_modename_tl { sub }
+          }
+          {
+            \tl_set:Nn \l_@@_filepath_tl { #2 }
+            \tl_set:Nn \l_@@_modename_tl { main }
+          }
+        \file_if_exist:VTF \l_@@_filepath_tl
+          { #3 }
+          {
+            \msg_warning:nnxx { AppendixAfter } { file-not-found }
+              { \l_@@_filepath_tl } { \l_@@_modename_tl }
+          }
+      }
+      {
+        \msg_warning:nn { AppendixAfter } { write-disabled }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\@@_appendix_input:}
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_appendix_input:
+  {
+    \@@_maybe_auto_open_stream:
+    \iow_now:Nx \g_@@_write_iow
+      {
+        \token_to_str:N \input { \tl_to_str:V \l_@@_filepath_tl }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\@@_input_dual_path:}
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_input_dual_path:
+  { \file_input:V \l_@@_filepath_tl }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\@@_after_appendix:NNn}
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_after_appendix:nn #1#2
+  {
+    \bool_if:NTF
+      \g_@@_active_bool
+      { 
+        \bool_if:nTF
+          { #1 }
+          {
+            \@@_maybe_auto_open_stream:
+            \iow_now:Nn \g_@@_write_iow { #2 }
+            \iow_now:Nn \g_@@_write_iow { \par }
+          }
+      }
+      {
+        \msg_warning:nn
+          { AppendixAfter }
+          { write-disabled }
+      }
+  }
+%    \end{macrocode}
 % \begin{macro}{\@@_open_stream:}
 %   出力ストリームを開きます。
 %    \begin{macrocode}
@@ -503,33 +581,10 @@
 %    \begin{macrocode}
 \NewDocumentCommand \AppendixInput { o m }
   {
-    \bool_if:NT \g_@@_active_bool
-      {
-        \@@_maybe_auto_open_stream:
-        \bool_if:NTF \g_@@_sub_mode_bool
-          {
-            \IfNoValueTF{#1}
-              { \tl_set:Nn \l_tmpa_tl { #2 } }
-              { \tl_set:Nn \l_tmpa_tl { #1 } }
-            \tl_set:Nn \l_tmpb_tl { sub }
-          }
-          {
-            \tl_set:Nn \l_tmpa_tl { #2 }
-            \tl_set:Nn \l_tmpb_tl { main }
-          }
-
-        \file_if_exist:VTF \l_tmpa_tl
-          {
-            \iow_now:Nx \g_@@_write_iow 
-              {
-                \token_to_str:N \input { \tl_to_str:V \l_tmpa_tl }
-              }
-          }
-          {
-            \msg_warning:nnxx { AppendixAfter } { file-not-found }
-              { \l_tmpa_tl } { \l_tmpb_tl }
-          }
-      }
+    \@@_process_input:nnN
+      { #1 }
+      { #2 }
+      \@@_appendix_input:
   }
 %    \end{macrocode}
 % \end{macro}
@@ -538,27 +593,10 @@
 %    \begin{macrocode}
 \NewDocumentCommand \inputdualpath { o m }
   {
-    \bool_if:NT \g_@@_active_bool
-      {
-        \bool_if:NTF \g_@@_sub_mode_bool
-          {
-            \IfNoValueTF{#1}
-              { \tl_set:Nn \l_tmpa_tl { #2 } }
-              { \tl_set:Nn \l_tmpa_tl { #1 } }
-            \tl_set:Nn \l_tmpb_tl { sub }
-          }
-          {
-            \tl_set:Nn \l_tmpa_tl { #2 }
-            \tl_set:Nn \l_tmpb_tl { main }
-          }
-
-        \file_if_exist:VTF \l_tmpa_tl
-          { \file_input:V \l_tmpa_tl }
-          {
-            \msg_warning:nnxx { AppendixAfter } { file-not-found }
-              { \l_tmpa_tl } { \l_tmpb_tl }
-          }
-      }
+    \@@_process_input:nnN
+      { #1 }
+      { #2 }
+      \@@_input_dual_path:
   }
 %    \end{macrocode}
 % \end{macro}
@@ -590,13 +628,9 @@
 \NewDocumentEnvironment { AfterAppendix } { +b }
   { }
   {
-    \bool_if:NTF \g_@@_active_bool
-      {
-        \@@_maybe_auto_open_stream:
-        \iow_now:Nn \g_@@_write_iow { #1 }
-        \iow_now:Nn \g_@@_write_iow { \par }
-      }
-      { \msg_warning:nn { AppendixAfter } { write-disabled } }
+    \@@_after_appendix:nn
+      { \g_@@_active_bool }
+      { #1 }
   }
 %    \end{macrocode}
 % \end{environment}
@@ -606,12 +640,9 @@
 \NewDocumentEnvironment { OnlySubAppendix } { +b }
   { }
   {
-    \bool_lazy_and:nnT { \g_@@_active_bool } { \g_@@_sub_mode_bool }
-      {
-        \@@_maybe_auto_open_stream:
-        \iow_now:Nn \g_@@_write_iow { #1 }
-        \iow_now:Nn \g_@@_write_iow { \par }
-      }
+    \@@_after_appendix:nn
+      { \g_@@_sub_mode_bool }
+      { #1 }
   }
 %    \end{macrocode}
 % \end{environment}
@@ -621,12 +652,9 @@
 \NewDocumentEnvironment { OnlyMainAppendix } { +b }
   { }
   {
-    \bool_lazy_and:nnT { \g_@@_active_bool } { ! \g_@@_sub_mode_bool }
-      {
-        \@@_maybe_auto_open_stream:
-        \iow_now:Nn \g_@@_write_iow { #1 }
-        \iow_now:Nn \g_@@_write_iow { \par }
-      }
+    \@@_after_appendix:nn
+      { ! \g_@@_sub_mode_bool }
+      { #1 }
   }
 %    \end{macrocode}
 % \end{environment}
