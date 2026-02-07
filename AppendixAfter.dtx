@@ -332,14 +332,14 @@
         },
     mode .initial:n = sub,
 
-    file .tl_set:N   = \g_@@_raw_filename_tl,
+    file .tl_gset:N   = \g_@@_raw_filename_tl,
     file .initial:n  = { \c_sys_jobname_str.apx },
 
-    auto-appendix .bool_set:N = \g_@@_auto_appendix_bool,
+    auto-appendix .bool_gset:N = \g_@@_auto_appendix_bool,
     auto-appendix .default:n  = true,
     auto-appendix .initial:n  = true,
 
-    auto-open-stream .bool_set:N = \g_@@_auto_open_stream_bool,
+    auto-open-stream .bool_gset:N = \g_@@_auto_open_stream_bool,
     auto-open-stream .default:n  = true,
     auto-open-stream .initial:n  = false,
 
@@ -380,10 +380,10 @@
   {
     \tl_if_in:NnTF \g_@@_raw_filename_tl { . }
       {
-        \tl_set_eq:NN \g_@@_filename_tl \g_@@_raw_filename_tl
+        \tl_gset_eq:NN \g_@@_filename_tl \g_@@_raw_filename_tl
       }
       {
-        \tl_set:Nx \g_@@_filename_tl { \g_@@_raw_filename_tl.apx }
+        \tl_gset:Nx \g_@@_filename_tl { \g_@@_raw_filename_tl.apx }
       }
   }
 %    \end{macrocode}
@@ -404,7 +404,7 @@
         \str_if_eq:VnT \l_@@_ext_tl { ##1 }
           { 
             \tl_set:Nx \l_tmpa_tl { \g_@@_filename_tl .apx }
-            \tl_set:Nx \g_@@_filename_tl { \l_tmpa_tl }
+            \tl_gset:Nx \g_@@_filename_tl { \l_tmpa_tl }
             \msg_error:nnx
               { AppendixAfter }
               { unsafe-extension }

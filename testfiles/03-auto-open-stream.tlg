@@ -10,7 +10,9 @@ TEST 1: auto-open-stream enabled
 TEST 2: Multiple writes
 ============================================================
 ============================================================
-Package AppendixAfter Warning: Appendix output file '' does not exist. Nothing to output.
+============================================================
+TEST 3: Final file content check
+============================================================
 -------- 03-auto-open-stream.apx (start) ---------
 (03-auto-open-stream.apx) First write triggers stream opening.[nl]
 Second line.[nl]
@@ -18,4 +20,6 @@ Third line.[nl]
 Content from AfterAppendix environment.[nl]
 \par[nl]
 -------- 03-auto-open-stream.apx (end) -----------
-(03-auto-open-stream.aux)
+============================================================
+[1
+] (03-auto-open-stream.aux)

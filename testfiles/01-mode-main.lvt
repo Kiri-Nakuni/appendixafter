@@ -18,6 +18,9 @@ HOGE
 \end{AfterAppendix}
 
 FUGA
+
+\AppendixInput[dummy.text]{subfile.tex}
+\inputdualpath[dummy.text]{subfile.tex}
 \OMIT
 \newpage
 \TIMO

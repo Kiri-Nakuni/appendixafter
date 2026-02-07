@@ -19,8 +19,11 @@
 \end{AfterAppendix}
 
 \OMIT
-\TIMO
 \OutputAppendix
-\SHOWFILE{\jobname.apx}
+\TIMO
+
+\TEST{Final file content check}{
+  \SHOWFILE{\jobname.apx}
+}
 
 \end{document}

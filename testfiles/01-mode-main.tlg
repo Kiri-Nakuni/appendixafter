@@ -6,12 +6,14 @@ TEST 1: File Search and Loading Position
 --- Before AppendixInput ---
 --- After AppendixInput ---
 ============================================================
-(test_main.apx (subfile.tex))
+(subfile.tex)
+(test_main.apx (subfile.tex) (subfile.tex))
 -------- test_main.apx (start) ---------
 (test_main.apx) \input{subfile.tex}[nl]
 Line directly written to appendix.[nl]
 hoge[nl]
 \par[nl]
+\input{subfile.tex}[nl]
 -------- test_main.apx (end) -----------
 [2
 ] (01-mode-main.aux)
