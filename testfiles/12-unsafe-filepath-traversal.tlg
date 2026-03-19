@@ -1,0 +1,26 @@
+This is a generated file for the l3build validation system.
+Don't change this file in any respect.
+============================================================
+TEST 1: Traversal path in file option falls back safely
+============================================================
+
+! Package AppendixAfter Error: File path '../escape-target.apx' is not allowed.
+(AppendixAfter)                Use a relative path without directory traversal.
+
+For immediate help type H <return>.
+ ...
+     
+l.8 }
+     
+
+Package AppendixAfter Info: Writing to safe path
+(AppendixAfter)             '12-unsafe-filepath-traversal.apx' instead.
+
+============================================================
+(12-unsafe-filepath-traversal.apx)
+-------- 12-unsafe-filepath-traversal.apx (start) ---------
+(12-unsafe-filepath-traversal.apx)
+This should be written to fallback filename.[nl]
+-------- 12-unsafe-filepath-traversal.apx (end) -----------
+[1
+] (12-unsafe-filepath-traversal.aux)

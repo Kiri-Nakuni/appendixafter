@@ -1,0 +1,14 @@
+\input{regression-test.tex}
+\documentclass{article}
+\usepackage[mode=main, file=./dotpathoutput]{AppendixAfter}
+
+\begin{document}
+\START
+\TEST{Dot in path segment should not count as extension}{
+  \AppendixLine{Dot-path filename should gain .apx extension.}
+}
+\OMIT
+\TIMO
+\OutputAppendix
+\SHOWFILE{dotpathoutput.apx}
+\end{document}

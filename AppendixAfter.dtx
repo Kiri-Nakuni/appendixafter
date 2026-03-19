@@ -91,6 +91,8 @@
 %   \end{syntax}
 %   遅延コンテンツを保存する一時ファイルの名前を指定します。
 %   デフォルトは\mbox{\cs{c_sys_jobname_str}\texttt{.apx}}です。
+%   安全のため、絶対パスおよび親ディレクトリ遡り（\texttt{../}, \texttt{..\textbackslash}）は拒否され、
+%   既定値へフォールバックします。
 % \end{variable}
 %
 % \begin{variable}{auto-appendix}
@@ -173,6 +175,9 @@
 %   これらの環境は、現在の\texttt{mode}に応じて条件付きでコンテンツを補助ファイルに書き込みます。
 %   特定のモードでのみ表示させたい情報がある場合に便利です。
 %   \env{OnlySubAppendix}はサブモード時のみ、\env{OnlyMainAppendix}はメインモード時のみ出力されます。
+%   \env{AfterAppendix}と同様に \texttt{+b} 引数の制約を受けるため、
+%   verbatim系（\env{verbatim}, \pkg{minted}, \pkg{listings} など）は直接扱えません。
+%   その場合は外部ファイルに分離して \cs{AppendixInput} で読み込んでください。
 % \end{function}
 %
 % \begin{function}{\OutputAppendix}
@@ -182,6 +187,7 @@
 %   保存されたコンテンツをその場で強制的に出力します。
 %   通常はドキュメント末尾で自動的に呼ばれますが、手動で制御したい場合に使用します。
 %   一度出力した後は、再度呼び出しても何も出力されません。
+%   \texttt{mode=off} の場合は何も出力しません。
 % \end{function}
 % 
 % \section{使用例}
@@ -308,14 +314,16 @@
 %    \end{macrocode}
 % \end{variable}
 %
-% \begin{variable}{\l_@@_ext_tl, \l_@@_raw_fileext_tl, \l_@@_filename_seq}
+% \begin{variable}{\l_@@_ext_tl, \l_@@_raw_fileext_tl}
 %   ファイル名の解析に使用するローカル変数です。
 %    \begin{macrocode}
 \tl_new:N   \l_@@_ext_tl         % 小文字化した拡張子
 \tl_new:N   \l_@@_raw_fileext_tl % 生の拡張子
+\tl_new:N   \l_@@_file_dir_tl    % fileオプションのディレクトリ部
+\tl_new:N   \l_@@_file_name_tl   % fileオプションのベース名
 \tl_new:N   \l_@@_filepath_tl    % パス分割用
 \tl_new:N   \l_@@_modename_tl    % 処理済みパス
-\seq_new:N  \l_@@_filename_seq   % "main"/"sub"
+\bool_new:N \l_@@_unsafe_filename_bool
 %    \end{macrocode}
 % \end{variable}
 %
@@ -376,21 +384,60 @@
   { AppendixInput:~File~'#1'~not~found.~(Mode:~#2) }
 \msg_new:nnn { AppendixAfter } { output-file-missing }
   { Appendix~output~file~'#1'~does~not~exist.~Nothing~to~output. }
+\msg_new:nnn { AppendixAfter } { unsafe-filepath }
+  { File~path~'#1'~is~not~allowed.~Use~a~relative~path~without~directory~traversal. }
 %    \end{macrocode}
 %
 % \subsection{内部関数}
+% \begin{macro}{\@@_validate_filename:}
+%   \texttt{file}オプションに指定されたパスの安全性を確認します。
+%   絶対パスまたは親ディレクトリ遡り（\texttt{../}, \texttt{..\textbackslash}）を検出した場合は
+%   エラーを通知し、安全な既定値へフォールバックします。
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_validate_filename:
+  {
+    \bool_set_false:N \l_@@_unsafe_filename_bool
+    \regex_match:nnT
+      { \A(?:/|[A-Za-z]:[\\/]) }
+      { \tl_to_str:V \g_@@_raw_filename_tl }
+      { \bool_set_true:N \l_@@_unsafe_filename_bool }
+    \regex_match:nnT
+      { (^|[\\/])\.\.([\\/]|$) }
+      { \tl_to_str:V \g_@@_raw_filename_tl }
+      { \bool_set_true:N \l_@@_unsafe_filename_bool }
+    \bool_if:NT \l_@@_unsafe_filename_bool
+      {
+        \msg_error:nnx
+          { AppendixAfter }
+          { unsafe-filepath }
+          { \g_@@_raw_filename_tl }
+        \tl_gset:Nn \g_@@_raw_filename_tl { \c_sys_jobname_str.apx }
+        \msg_info:nnx
+          { AppendixAfter }
+          { instead-filename }
+          { \g_@@_raw_filename_tl }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}{\@@_check_filename:}
-%   ファイル名に拡張子が含まれているかを確認し、含まれていない場合は
+%   ファイル名を分解して拡張子の有無を確認し、拡張子がなければ
 %   \texttt{.apx}を追加します。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_check_filename:
   {
-    \tl_if_in:NnTF \g_@@_raw_filename_tl { . }
-      {
-        \tl_gset_eq:NN \g_@@_filename_tl \g_@@_raw_filename_tl
-      }
+    \file_parse_full_name:VNNN
+      \g_@@_raw_filename_tl
+      \l_@@_file_dir_tl
+      \l_@@_file_name_tl
+      \l_@@_raw_fileext_tl
+    \tl_if_empty:VTF \l_@@_raw_fileext_tl
       {
         \tl_gset:Nx \g_@@_filename_tl { \g_@@_raw_filename_tl.apx }
+      }
+      {
+        \tl_gset_eq:NN \g_@@_filename_tl \g_@@_raw_filename_tl
       }
   }
 %    \end{macrocode}
@@ -401,9 +448,11 @@
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_check_fileext:
   {
-    \tl_clear:N \l_@@_raw_fileext_tl
-    \seq_set_split:NnV \l_@@_filename_seq { . } \g_@@_filename_tl
-    \seq_get_right:NN \l_@@_filename_seq \l_@@_raw_fileext_tl
+    \file_parse_full_name:VNNN
+      \g_@@_filename_tl
+      \l_@@_file_dir_tl
+      \l_@@_file_name_tl
+      \l_@@_raw_fileext_tl
     \tl_set:Nx \l_@@_ext_tl { \str_foldcase:V \l_@@_raw_fileext_tl }
     
     \clist_map_inline:Nn \c_@@_unsafe_ext_clist
@@ -553,6 +602,17 @@
   }
 %    \end{macrocode}
 % \end{macro}
+% \begin{macro}{\@@_after_appendix_if_active:n, \@@_after_appendix_if_sub:n, \@@_after_appendix_if_main:n}
+%   \cs{@@_after_appendix:nn} の薄いラッパーです。
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_after_appendix_if_active:n #1
+  { \@@_after_appendix:nn { \g_@@_active_bool } { #1 } }
+\cs_new_protected:Npn \@@_after_appendix_if_sub:n #1
+  { \@@_after_appendix:nn { \g_@@_sub_mode_bool } { #1 } }
+\cs_new_protected:Npn \@@_after_appendix_if_main:n #1
+  { \@@_after_appendix:nn { ! \g_@@_sub_mode_bool } { #1 } }
+%    \end{macrocode}
+% \end{macro}
 % \begin{macro}{\@@_open_stream:}
 %   出力ストリームを開きます。
 %   まだ開いていない場合にのみ実行され、二重オープンを防ぎます。
@@ -564,6 +624,7 @@
   {
     \bool_if:NF \g_@@_stream_is_open_bool
       {
+        \@@_validate_filename:
         \@@_check_filename:
         \@@_check_fileext:
         \iow_open:NV \g_@@_write_iow \g_@@_filename_tl
@@ -615,6 +676,12 @@
       { ! \g_@@_already_output_bool }
       {
         \@@_close_stream:
+        \tl_if_empty:NT \g_@@_filename_tl
+          {
+            \@@_validate_filename:
+            \@@_check_filename:
+            \@@_check_fileext:
+          }
         \file_if_exist:VTF \g_@@_filename_tl
           {
             \bool_if:NT \g_@@_auto_appendix_bool { \clearpage \appendix }
@@ -708,11 +775,7 @@
 %    \begin{macrocode}
 \NewDocumentEnvironment { AfterAppendix } { +b }
   { }
-  {
-    \@@_after_appendix:nn
-      { \g_@@_active_bool }
-      { #1 }
-  }
+  { \@@_after_appendix_if_active:n { #1 } }
 %    \end{macrocode}
 % \end{environment}
 %
@@ -721,11 +784,7 @@
 %    \begin{macrocode}
 \NewDocumentEnvironment { OnlySubAppendix } { +b }
   { }
-  {
-    \@@_after_appendix:nn
-      { \g_@@_sub_mode_bool }
-      { #1 }
-  }
+  { \@@_after_appendix_if_sub:n { #1 } }
 %    \end{macrocode}
 % \end{environment}
 %
@@ -734,11 +793,7 @@
 %    \begin{macrocode}
 \NewDocumentEnvironment { OnlyMainAppendix } { +b }
   { }
-  {
-    \@@_after_appendix:nn
-      { ! \g_@@_sub_mode_bool }
-      { #1 }
-  }
+  { \@@_after_appendix_if_main:n { #1 } }
 %    \end{macrocode}
 % \end{environment}
 %
