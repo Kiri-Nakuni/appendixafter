@@ -3,8 +3,8 @@
 \usepackage[mode=main, auto-appendix=true]{AppendixAfter}
 
 \begin{document}
-\START
 \section{Main Section}
+\START
 
 \TEST{auto-appendix option enabled}{
   Main document content.

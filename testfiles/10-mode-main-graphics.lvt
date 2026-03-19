@@ -1,0 +1,16 @@
+\input{regression-test.tex}
+\documentclass{article}
+\usepackage{docmute}
+\usepackage[mode=main]{AppendixAfter}
+\ExplSyntaxOn
+\NewDocumentCommand \DummyGraphics { o m }
+  {
+    \typeout{> DUMMY~Graphics:~opt=[#1],~main={#2}}
+  }
+\ExplSyntaxOff
+\begin{document}
+\START
+\ContextSwitch{\DummyGraphics}{gahaha}{[width=0.8\linewidth]{texput.pdf}}
+
+\ContextSwitch{\DummyGraphics}{}{[width=0.8\linewidth]{texput.pdf}}
+\end{document}

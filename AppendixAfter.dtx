@@ -43,7 +43,7 @@
 %
 % \title{\pkg{AppendixAfter}パッケージ}
 % \author{那国 霧}
-% \date{2026/02/02 v0.1.2}
+% \date{2026/03/17 v0.2.0}
 % \maketitle
 %
 % \begin{documentation}
@@ -58,7 +58,7 @@
 % そのような状況のために、本パッケージは、以下の機能を提供します：
 % \begin{itemize}
 %   \item コンテンツの遅延出力
-%   \item メインファイルとサブファイルでの条件付き出力の制御
+%   \item メインファイルとサブファイルでの読み込みパスの制御
 %   \item 安全なファイル名のチェック機能
 % \end{itemize}
 %
@@ -77,16 +77,14 @@
 % \end{verbatim}
 %
 % 利用可能なオプションは以下の通りです：
-%
 % \begin{variable}{mode}
 %   動作モードを指定します。
 %   \begin{description}
 %     \item[\texttt{main}] メインファイルとしてコンパイルする場合に使用します。
-%     \item[\texttt{sub}] (デフォルト)サブファイル（\cs{input}される側）としてコンパイルする場合に使用します。
+%     \item[\texttt{sub}] (デフォルト)サブファイル（\cs{input}される側）としてコンパイルする場合に使用します。（規定）
 %     \item[\texttt{off}] 機能を無効化します。
 %   \end{description}
 % \end{variable}
-%
 % \begin{variable}{file}
 %   \begin{syntax}
 %     file = \meta{filename}
@@ -99,7 +97,8 @@
 %   \begin{syntax}
 %     auto-appendix = \meta{bool}
 %   \end{syntax}
-%   \texttt{true} (デフォルト)の場合、出力時に自動的に\cs{appendix}と\cs{clearpage}を発行します。
+%   \texttt{true} (デフォルト)の場合、補助ファイルの内容を出力する際に
+%   自動的に\cs{appendix}と\cs{clearpage}を発行します。
 % \end{variable}
 %
 % \begin{variable}{auto-open-stream}
@@ -131,13 +130,22 @@
 %   読み込むパスを切り替えるためのコマンドです。
 %   引数の取り方は\cs{AppendixInput}と同様です。
 % \end{function}
-%
+% 
+% \begin{function}{\ContextSwitch}
+%   \begin{syntax}
+%     \cs{ContextSwitch} \Arg{content} \Arg{sub\_arg} \Arg{main\_arg}
+%   \end{syntax}
+%   contentの直後に差し込むトークン列をモードに応じて切り替えます。
+%   メインモードでは\meta{main\_arg}が、
+%   サブモードでは\meta{sub\_arg}（sub\_argが空であるときはmain\_arg）が
+%   \meta{content}の後に挿入されます。
+%   パッケージが無効であるときは何も挿入されません。
+% \end{function}
 % \begin{function}{\AppendixLine}
 %   \begin{syntax}
 %     \cs{AppendixLine} \Arg{line}
 %   \end{syntax}
 %   引数で与えられたテキストを、そのまま補助ファイルに書き込みます。
-%   コマンドの動的な生成などに使用できます。
 %   \cs{par}は自動的には追加されないため、必要に応じて明示的に指定してください。
 % \end{function}
 %
@@ -175,7 +183,7 @@
 %   通常はドキュメント末尾で自動的に呼ばれますが、手動で制御したい場合に使用します。
 %   一度出力した後は、再度呼び出しても何も出力されません。
 % \end{function}
-%
+% 
 % \section{使用例}
 %
 % \subsection{基本的な使い方}
@@ -204,6 +212,7 @@
 % \section{サブファイルの内容}
 % サブファイルの本文。
 % \AppendixInput[appendix.tex]{./section1/appendix.tex}
+% \ContextSwitch{\includegraphics}{[width=0.8\linewidth]{pic.png}}{[width=0.8\linewidth]{./section1/pic.png}}
 % \end{document}
 % \end{verbatim}
 %
@@ -220,8 +229,8 @@
 \NeedsTeXFormat{LaTeX2e}[2023/06/01]
 \ProvidesExplPackage
   {AppendixAfter}
-  {2026/02/02}
-  {0.1.2}
+  {2026/03/17}
+  {0.2.0}
   {Stream-based content delaying with docmute support}
 %    \end{macrocode}
 %
@@ -229,7 +238,6 @@
 %
 % \begin{variable}{\g_@@_active_bool}
 %   パッケージが有効かどうかを示すフラグです。
-%   \texttt{mode=off}の場合は\texttt{false}、それ以外は\texttt{true}になります。
 %    \begin{macrocode}
 \bool_new:N \g_@@_active_bool
 %    \end{macrocode}
@@ -237,7 +245,6 @@
 %
 % \begin{variable}{\g_@@_sub_mode_bool}
 %   サブモードかどうかを示すフラグです。
-%   \texttt{mode=sub}の場合は\texttt{true}、\texttt{mode=main}の場合は\texttt{false}になります。
 %    \begin{macrocode}
 \bool_new:N \g_@@_sub_mode_bool
 %    \end{macrocode}
@@ -273,8 +280,8 @@
 % \end{variable}
 %
 % \begin{variable}{\g_@@_raw_filename_tl, \g_@@_filename_tl}
-%   |\g_@@_raw_filename_tl|はユーザーが指定した生のファイル名です。
-%   |\g_@@_filename_tl|は拡張子チェック後の最終的なファイル名です。
+%   \cs{g_@@_raw_filename_tl}はユーザーが指定した生のファイル名です。
+%   \cs{g_@@_filename_tl}は拡張子チェック後の最終的なファイル名です。
 %    \begin{macrocode}
 \tl_new:N   \g_@@_raw_filename_tl
 \tl_new:N   \g_@@_filename_tl
@@ -485,6 +492,31 @@
   { \file_input:V \l_@@_filepath_tl }
 %    \end{macrocode}
 % \end{macro}
+% \begin{macro}{\ContextSwitch}
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_contextswitch:nnn #1#2#3
+  {
+    \bool_if:NTF \g_@@_active_bool
+      {
+        \bool_if:NTF \g_@@_sub_mode_bool
+          {
+            \tl_if_empty:nTF
+              { #2 }
+              { #1 #3 }
+              { #1 #2 }
+          }
+          {
+            #1 #3
+          }
+      }
+      {
+        \msg_warning:nn
+          { AppendixAfter }
+          { write-disabled }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
 % \begin{macro}{\@@_after_appendix:nn}
 %   第1引数の条件（真偽式）が真のときに限り、第2引数の内容を補助ファイルに書き込みます。
 %
@@ -571,12 +603,10 @@
 % \end{macro}
 %
 % \begin{macro}{\@@_output_content:}
-%   保存されたコンテンツを出力します。
-%   \cs{OutputAppendix} および \texttt{enddocument} フックから呼ばれるため、
-%   \cs{g_@@_already_output_bool} により「一度だけ」出力されます。
+%   保存されたコンテンツを一度だけ出力します。
 %
-%   出力前にストリームを閉じ、出力ファイルが存在すれば \cs{file_input:V} で読み込みます。
-%   \texttt{auto-appendix=true} の場合は、その直前に \cs{clearpage} と \cs{appendix} を発行します。
+%   出力前に入力ストリームを閉じ、出力ファイルが存在すれば \cs{file_input:V} で読み込みます。
+%   \texttt{auto-appendix=true} の場合は、読み込みの直前に \cs{clearpage} と \cs{appendix} を発行します。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_output_content:
   {
@@ -618,7 +648,7 @@
 % \subsection{ユーザーコマンド}
 %
 % \begin{macro}{\AppendixInput}
-%   ファイルを読み込み、その内容を補助ファイルに記録します。
+%   ファイルを読み込む指示を補助ファイルに記録します。
 %    \begin{macrocode}
 \NewDocumentCommand \AppendixInput { o m }
   {
@@ -631,6 +661,7 @@
 % \end{macro}
 %
 % \begin{macro}{\inputdualpath}
+%   ファイルを読み込みます。
 %    \begin{macrocode}
 \NewDocumentCommand \inputdualpath { o m }
   {
@@ -641,7 +672,15 @@
   }
 %    \end{macrocode}
 % \end{macro}
-%
+% \begin{macro}{\ContextSwitch}
+%   contentの直後に差し込むトークン列をモードに応じて切り替えます。
+%    \begin{macrocode}
+\NewDocumentCommand \ContextSwitch { m m m }
+  {
+    \@@_contextswitch:nnn { #1 } { #2 } { #3 }
+  }
+%    \end{macrocode}
+% \end{macro}
 % \begin{macro}{\AppendixLine}
 %   1行のテキストを補助ファイルに書き込みます。
 %    \begin{macrocode}
@@ -658,6 +697,7 @@
 % \end{macro}
 %
 % \begin{macro}{\OutputAppendix}
+%   補助ファイルの内容を読み込みます。
 %    \begin{macrocode}
 \NewDocumentCommand \OutputAppendix { } { \@@_output_content: }
 %    \end{macrocode}
@@ -677,6 +717,7 @@
 % \end{environment}
 %
 % \begin{environment}{OnlySubAppendix}
+%   環境内のコンテンツをサブモード時のみ補助ファイルに保存します。
 %    \begin{macrocode}
 \NewDocumentEnvironment { OnlySubAppendix } { +b }
   { }
@@ -689,6 +730,7 @@
 % \end{environment}
 %
 % \begin{environment}{OnlyMainAppendix}
+%   環境内のコンテンツをメインモード時のみ補助ファイルに保存します。
 %    \begin{macrocode}
 \NewDocumentEnvironment { OnlyMainAppendix } { +b }
   { }
