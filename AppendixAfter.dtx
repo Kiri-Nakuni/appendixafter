@@ -314,7 +314,9 @@
 %    \end{macrocode}
 % \end{variable}
 %
-% \begin{variable}{\l_@@_ext_tl, \l_@@_raw_fileext_tl}
+% \begin{variable}
+%   {\l_@@_ext_tl, \l_@@_raw_fileext_tl, \l_@@_file_dir_tl, \l_@@_file_name_tl,
+%    \l_@@_filepath_tl, \l_@@_modename_tl, \l_@@_unsafe_filename_bool}
 %   ファイル名の解析に使用するローカル変数です。
 %    \begin{macrocode}
 \tl_new:N   \l_@@_ext_tl         % 小文字化した拡張子
@@ -323,7 +325,7 @@
 \tl_new:N   \l_@@_file_name_tl   % fileオプションのベース名
 \tl_new:N   \l_@@_filepath_tl    % パス分割用
 \tl_new:N   \l_@@_modename_tl    % 処理済みパス
-\bool_new:N \l_@@_unsafe_filename_bool
+\bool_new:N \l_@@_unsafe_filename_bool % fileオプションの安全性判定
 %    \end{macrocode}
 % \end{variable}
 %
@@ -398,11 +400,11 @@
   {
     \bool_set_false:N \l_@@_unsafe_filename_bool
     \regex_match:nnT
-      { \A(?:/|[A-Za-z]:[\\/]) }
+      { \A(?:/|\\\\|[A-Za-z]:) }
       { \tl_to_str:V \g_@@_raw_filename_tl }
       { \bool_set_true:N \l_@@_unsafe_filename_bool }
     \regex_match:nnT
-      { (^|[\\/])\.\.([\\/]|$) }
+      { (^|[\\/])\.\.($|[\\/]) }
       { \tl_to_str:V \g_@@_raw_filename_tl }
       { \bool_set_true:N \l_@@_unsafe_filename_bool }
     \bool_if:NT \l_@@_unsafe_filename_bool
@@ -475,6 +477,18 @@
   }
 %    \end{macrocode}
 % \end{macro}
+% \begin{macro}{\@@_ensure_filename_valid:}
+%   出力先ファイル名の検証と正規化を一括で行います。
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_ensure_filename_valid:
+  {
+    \@@_validate_filename:
+    \@@_check_filename:
+    \@@_check_fileext:
+  }
+%    \end{macrocode}
+% \end{macro}
+%
 %
 % \begin{macro}{\@@_process_input:nnN}
 %   ユーザー向けコマンドで共通に利用する「パス選択+存在確認+処理」関数です。
@@ -624,9 +638,7 @@
   {
     \bool_if:NF \g_@@_stream_is_open_bool
       {
-        \@@_validate_filename:
-        \@@_check_filename:
-        \@@_check_fileext:
+        \@@_ensure_filename_valid:
         \iow_open:NV \g_@@_write_iow \g_@@_filename_tl
         \bool_gset_true:N \g_@@_stream_is_open_bool
       }
@@ -668,6 +680,8 @@
 %
 %   出力前に入力ストリームを閉じ、出力ファイルが存在すれば \cs{file_input:V} で読み込みます。
 %   \texttt{auto-appendix=true} の場合は、読み込みの直前に \cs{clearpage} と \cs{appendix} を発行します。
+%   なお、ストリームが一度も開かれていない場合（例：\texttt{auto-open-stream=true} かつ書き込みなし）に備えて、
+%   出力時にも必要最小限のファイル名検証を行います。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_output_content:
   {
@@ -678,9 +692,7 @@
         \@@_close_stream:
         \tl_if_empty:NT \g_@@_filename_tl
           {
-            \@@_validate_filename:
-            \@@_check_filename:
-            \@@_check_fileext:
+            \@@_ensure_filename_valid:
           }
         \file_if_exist:VTF \g_@@_filename_tl
           {
