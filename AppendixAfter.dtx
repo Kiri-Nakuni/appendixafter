@@ -455,7 +455,9 @@
       \l_@@_file_dir_tl
       \l_@@_file_name_tl
       \l_@@_raw_fileext_tl
-    \tl_set:Nx \l_@@_ext_tl { \str_foldcase:V \l_@@_raw_fileext_tl }
+    \tl_set_eq:NN \l_@@_ext_tl \l_@@_raw_fileext_tl
+    \regex_replace_once:nnN { \A \. } { } \l_@@_ext_tl
+    \tl_set:Nx \l_@@_ext_tl { \str_foldcase:V \l_@@_ext_tl }
     
     \clist_map_inline:Nn \c_@@_unsafe_ext_clist
       {
