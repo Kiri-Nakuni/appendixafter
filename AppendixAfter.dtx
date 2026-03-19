@@ -404,7 +404,7 @@
       { \tl_to_str:V \g_@@_raw_filename_tl }
       { \bool_set_true:N \l_@@_unsafe_filename_bool }
     \regex_match:nnT
-      { (^|[\\/])\.\.($|[\\/]) }
+      { (?:\A\.\.|[\\/]\.\.)(?:[\\/]|\Z) }
       { \tl_to_str:V \g_@@_raw_filename_tl }
       { \bool_set_true:N \l_@@_unsafe_filename_bool }
     \bool_if:NT \l_@@_unsafe_filename_bool
