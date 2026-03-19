@@ -91,8 +91,6 @@
 %   \end{syntax}
 %   遅延コンテンツを保存する一時ファイルの名前を指定します。
 %   デフォルトは\mbox{\cs{c_sys_jobname_str}\texttt{.apx}}です。
-%   安全のため、絶対パスおよび親ディレクトリ遡り（\texttt{../}, \texttt{..\textbackslash}）は拒否され、
-%   既定値へフォールバックします。
 % \end{variable}
 %
 % \begin{variable}{auto-appendix}
@@ -316,7 +314,7 @@
 %
 % \begin{variable}
 %   {\l_@@_ext_tl, \l_@@_raw_fileext_tl, \l_@@_file_dir_tl, \l_@@_file_name_tl,
-%    \l_@@_filepath_tl, \l_@@_modename_tl, \l_@@_unsafe_filename_bool}
+%    \l_@@_filepath_tl, \l_@@_modename_tl}
 %   ファイル名の解析に使用するローカル変数です。
 %    \begin{macrocode}
 \tl_new:N   \l_@@_ext_tl         % 小文字化した拡張子
@@ -325,7 +323,6 @@
 \tl_new:N   \l_@@_file_name_tl   % fileオプションのベース名
 \tl_new:N   \l_@@_filepath_tl    % パス分割用
 \tl_new:N   \l_@@_modename_tl    % 処理済みパス
-\bool_new:N \l_@@_unsafe_filename_bool % fileオプションの安全性判定
 %    \end{macrocode}
 % \end{variable}
 %
@@ -386,43 +383,9 @@
   { AppendixInput:~File~'#1'~not~found.~(Mode:~#2) }
 \msg_new:nnn { AppendixAfter } { output-file-missing }
   { Appendix~output~file~'#1'~does~not~exist.~Nothing~to~output. }
-\msg_new:nnn { AppendixAfter } { unsafe-filepath }
-  { File~path~'#1'~is~not~allowed.~Use~a~relative~path~without~directory~traversal. }
 %    \end{macrocode}
 %
 % \subsection{内部関数}
-% \begin{macro}{\@@_validate_filename:}
-%   \texttt{file}オプションに指定されたパスの安全性を確認します。
-%   絶対パスまたは親ディレクトリ遡り（\texttt{../}, \texttt{..\textbackslash}）を検出した場合は
-%   エラーを通知し、安全な既定値へフォールバックします。
-%    \begin{macrocode}
-\cs_new_protected:Nn \@@_validate_filename:
-  {
-    \bool_set_false:N \l_@@_unsafe_filename_bool
-    \regex_match:nnT
-      { \A(?:/|\\\\|[A-Za-z]:) }
-      { \tl_to_str:V \g_@@_raw_filename_tl }
-      { \bool_set_true:N \l_@@_unsafe_filename_bool }
-    \regex_match:nnT
-      { (?:\A\.\.|[\\/]\.\.)(?:[\\/]|\Z) }
-      { \tl_to_str:V \g_@@_raw_filename_tl }
-      { \bool_set_true:N \l_@@_unsafe_filename_bool }
-    \bool_if:NT \l_@@_unsafe_filename_bool
-      {
-        \msg_error:nnx
-          { AppendixAfter }
-          { unsafe-filepath }
-          { \g_@@_raw_filename_tl }
-        \tl_gset:Nn \g_@@_raw_filename_tl { \c_sys_jobname_str.apx }
-        \msg_info:nnx
-          { AppendixAfter }
-          { instead-filename }
-          { \g_@@_raw_filename_tl }
-      }
-  }
-%    \end{macrocode}
-% \end{macro}
-%
 % \begin{macro}{\@@_check_filename:}
 %   ファイル名を分解して拡張子の有無を確認し、拡張子がなければ
 %   \texttt{.apx}を追加します。
@@ -484,7 +447,6 @@
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_ensure_filename_valid:
   {
-    \@@_validate_filename:
     \@@_check_filename:
     \@@_check_fileext:
   }

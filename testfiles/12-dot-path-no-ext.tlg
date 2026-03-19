@@ -9,4 +9,4 @@ TEST 1: Dot in path segment should not count as extension
 (dotpathoutput.apx) Dot-path filename should gain .apx extension.[nl]
 -------- dotpathoutput.apx (end) -----------
 [1
-] (13-dot-path-no-ext.aux)
+] (12-dot-path-no-ext.aux)
