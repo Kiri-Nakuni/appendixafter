@@ -1,0 +1,12 @@
+This is a generated file for the l3build validation system.
+Don't change this file in any respect.
+============================================================
+TEST 1: Dot in path segment should not count as extension
+============================================================
+============================================================
+(dotpathoutput.apx)
+-------- dotpathoutput.apx (start) ---------
+(dotpathoutput.apx) Dot-path filename should gain .apx extension.[nl]
+-------- dotpathoutput.apx (end) -----------
+[1
+] (12-dot-path-no-ext.aux)

@@ -173,6 +173,9 @@
 %   これらの環境は、現在の\texttt{mode}に応じて条件付きでコンテンツを補助ファイルに書き込みます。
 %   特定のモードでのみ表示させたい情報がある場合に便利です。
 %   \env{OnlySubAppendix}はサブモード時のみ、\env{OnlyMainAppendix}はメインモード時のみ出力されます。
+%   \env{AfterAppendix}と同様に \texttt{+b} 引数の制約を受けるため、
+%   verbatim系（\env{verbatim}, \pkg{minted}, \pkg{listings} など）は直接扱えません。
+%   その場合は外部ファイルに分離して \cs{AppendixInput} で読み込んでください。
 % \end{function}
 %
 % \begin{function}{\OutputAppendix}
@@ -182,6 +185,7 @@
 %   保存されたコンテンツをその場で強制的に出力します。
 %   通常はドキュメント末尾で自動的に呼ばれますが、手動で制御したい場合に使用します。
 %   一度出力した後は、再度呼び出しても何も出力されません。
+%   \texttt{mode=off} の場合は何も出力しません。
 % \end{function}
 % 
 % \section{使用例}
@@ -308,14 +312,17 @@
 %    \end{macrocode}
 % \end{variable}
 %
-% \begin{variable}{\l_@@_ext_tl, \l_@@_raw_fileext_tl, \l_@@_filename_seq}
+% \begin{variable}
+%   {\l_@@_ext_tl, \l_@@_raw_fileext_tl, \l_@@_file_dir_tl, \l_@@_file_name_tl,
+%    \l_@@_filepath_tl, \l_@@_modename_tl}
 %   ファイル名の解析に使用するローカル変数です。
 %    \begin{macrocode}
 \tl_new:N   \l_@@_ext_tl         % 小文字化した拡張子
 \tl_new:N   \l_@@_raw_fileext_tl % 生の拡張子
+\tl_new:N   \l_@@_file_dir_tl    % fileオプションのディレクトリ部
+\tl_new:N   \l_@@_file_name_tl   % fileオプションのベース名
 \tl_new:N   \l_@@_filepath_tl    % パス分割用
 \tl_new:N   \l_@@_modename_tl    % 処理済みパス
-\seq_new:N  \l_@@_filename_seq   % "main"/"sub"
 %    \end{macrocode}
 % \end{variable}
 %
@@ -380,17 +387,22 @@
 %
 % \subsection{内部関数}
 % \begin{macro}{\@@_check_filename:}
-%   ファイル名に拡張子が含まれているかを確認し、含まれていない場合は
+%   ファイル名を分解して拡張子の有無を確認し、拡張子がなければ
 %   \texttt{.apx}を追加します。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_check_filename:
   {
-    \tl_if_in:NnTF \g_@@_raw_filename_tl { . }
-      {
-        \tl_gset_eq:NN \g_@@_filename_tl \g_@@_raw_filename_tl
-      }
+    \file_parse_full_name:VNNN
+      \g_@@_raw_filename_tl
+      \l_@@_file_dir_tl
+      \l_@@_file_name_tl
+      \l_@@_raw_fileext_tl
+    \tl_if_empty:VTF \l_@@_raw_fileext_tl
       {
         \tl_gset:Nx \g_@@_filename_tl { \g_@@_raw_filename_tl.apx }
+      }
+      {
+        \tl_gset_eq:NN \g_@@_filename_tl \g_@@_raw_filename_tl
       }
   }
 %    \end{macrocode}
@@ -401,10 +413,14 @@
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_check_fileext:
   {
-    \tl_clear:N \l_@@_raw_fileext_tl
-    \seq_set_split:NnV \l_@@_filename_seq { . } \g_@@_filename_tl
-    \seq_get_right:NN \l_@@_filename_seq \l_@@_raw_fileext_tl
-    \tl_set:Nx \l_@@_ext_tl { \str_foldcase:V \l_@@_raw_fileext_tl }
+    \file_parse_full_name:VNNN
+      \g_@@_filename_tl
+      \l_@@_file_dir_tl
+      \l_@@_file_name_tl
+      \l_@@_raw_fileext_tl
+    \tl_set_eq:NN \l_@@_ext_tl \l_@@_raw_fileext_tl
+    \regex_replace_once:nnN { \A \. } { } \l_@@_ext_tl
+    \tl_set:Nx \l_@@_ext_tl { \str_foldcase:V \l_@@_ext_tl }
     
     \clist_map_inline:Nn \c_@@_unsafe_ext_clist
       {
@@ -426,6 +442,17 @@
   }
 %    \end{macrocode}
 % \end{macro}
+% \begin{macro}{\@@_ensure_filename_valid:}
+%   出力先ファイル名の検証と正規化を一括で行います。
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_ensure_filename_valid:
+  {
+    \@@_check_filename:
+    \@@_check_fileext:
+  }
+%    \end{macrocode}
+% \end{macro}
+%
 %
 % \begin{macro}{\@@_process_input:nnN}
 %   ユーザー向けコマンドで共通に利用する「パス選択+存在確認+処理」関数です。
@@ -436,8 +463,8 @@
 %     \item[\#3] ファイルが存在した場合に実行する処理（引数なしの実行トークン列）。
 %   \end{arguments}
 %
-%   本関数は、\cs{l_@@_filepath_tl} に最終的に採用されたパスを格納し、
-%   さらに \cs{l_@@_modename_tl} に \texttt{main} または \texttt{sub} を格納します。
+%   本関数は\cs{l_@@_filepath_tl}に最終的に採用されたパスを格納し、
+%   さらに\cs{l_@@_modename_tl}に\texttt{main} または\texttt{sub}を格納します。
 %   パッケージが無効（\texttt{mode=off}）なら警告を出して何もしません。
 %    \begin{macrocode}
 \cs_new_protected:Npn \@@_process_input:nnN #1#2#3
@@ -470,8 +497,8 @@
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\@@_appendix_input:}
-%   \cs{\@@_process_input:nnN} で決定した \cs{l_@@_filepath_tl} を用いて、
-%   そのファイルを後で読み込むための \cs{input} 行を補助ファイルへ書き込みます。
+%   \cs{\@@_process_input:nnN}で決定した\cs{l_@@_filepath_tl}を用いて、
+%   そのファイルを後で読み込むための\cs{input}行を補助ファイルへ書き込みます。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_appendix_input:
   {
@@ -484,9 +511,9 @@
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\@@_input_dual_path:}
-%   \cs{\@@_process_input:nnN} で決定したパス（\cs{l_@@_filepath_tl}）を、
+%   \cs{\@@_process_input:nnN}で決定したパス（\cs{l_@@_filepath_tl}）を、
 %   その場で通常の入力として読み込みます。
-%   \cs{AppendixInput} と異なり、補助ファイルへの記録は行いません。
+%   \cs{AppendixInput}と異なり、補助ファイルへの記録は行いません。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_input_dual_path:
   { \file_input:V \l_@@_filepath_tl }
@@ -521,11 +548,11 @@
 %   第1引数の条件（真偽式）が真のときに限り、第2引数の内容を補助ファイルに書き込みます。
 %
 %   \begin{arguments}
-%     \item[\#1] 記録するかどうかの条件（例：\cs{g_@@_active_bool} や \cs{g_@@_sub_mode_bool}）。
+%     \item[\#1] 記録するかどうかの条件（例：\cs{g_@@_active_bool}や\cs{g_@@_sub_mode_bool}）。
 %     \item[\#2] 補助ファイルに書き込む内容（環境本文など）。
 %   \end{arguments}
 %
-%   書き込みの最後に \cs{par} を1つ追加します。
+%   書き込みの最後に\cs{par}を1つ追加します。
 %   これにより、環境本文を連結したときの段落境界が自然になるようにしています。
 %    \begin{macrocode}
 \cs_new_protected:Npn \@@_after_appendix:nn #1#2
@@ -553,19 +580,29 @@
   }
 %    \end{macrocode}
 % \end{macro}
+% \begin{macro}{\@@_after_appendix_if_active:n, \@@_after_appendix_if_sub:n, \@@_after_appendix_if_main:n}
+%   \cs{@@_after_appendix:nn}の薄いラッパーです。
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_after_appendix_if_active:n #1
+  { \@@_after_appendix:nn { \g_@@_active_bool } { #1 } }
+\cs_new_protected:Npn \@@_after_appendix_if_sub:n #1
+  { \@@_after_appendix:nn { \g_@@_sub_mode_bool } { #1 } }
+\cs_new_protected:Npn \@@_after_appendix_if_main:n #1
+  { \@@_after_appendix:nn { ! \g_@@_sub_mode_bool } { #1 } }
+%    \end{macrocode}
+% \end{macro}
 % \begin{macro}{\@@_open_stream:}
 %   出力ストリームを開きます。
 %   まだ開いていない場合にのみ実行され、二重オープンを防ぎます。
 %
-%   オープン前に \cs{\@@_check_filename:} と \cs{\@@_check_fileext:} を呼び、
-%   拡張子の補完と安全性チェックを行った上で \cs{iow_open:NV} で書き込み先を確定します。
+%   オープン前に\cs{\@@_check_filename:}と\cs{\@@_check_fileext:}を呼び、
+%   拡張子の補完と安全性チェックを行った上で\cs{iow_open:NV}で書き込み先を確定します。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_open_stream:
   {
     \bool_if:NF \g_@@_stream_is_open_bool
       {
-        \@@_check_filename:
-        \@@_check_fileext:
+        \@@_ensure_filename_valid:
         \iow_open:NV \g_@@_write_iow \g_@@_filename_tl
         \bool_gset_true:N \g_@@_stream_is_open_bool
       }
@@ -574,8 +611,8 @@
 % \end{macro}
 %
 % \begin{macro}{\@@_maybe_auto_open_stream:}
-%   \texttt{auto-open-stream=true} のときに、必要になった瞬間だけストリームを開くための補助関数です。
-%   パッケージが有効で、かつ遅延オープンが有効な場合にのみ \cs{\@@_open_stream:} を実行します。
+%   \texttt{auto-open-stream=true}のときに、必要になった瞬間だけストリームを開くための補助関数です。
+%   パッケージが有効で、かつ遅延オープンが有効な場合にのみ\cs{\@@_open_stream:}を実行します。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_maybe_auto_open_stream:
   {
@@ -605,8 +642,10 @@
 % \begin{macro}{\@@_output_content:}
 %   保存されたコンテンツを一度だけ出力します。
 %
-%   出力前に入力ストリームを閉じ、出力ファイルが存在すれば \cs{file_input:V} で読み込みます。
-%   \texttt{auto-appendix=true} の場合は、読み込みの直前に \cs{clearpage} と \cs{appendix} を発行します。
+%   出力前に入力ストリームを閉じ、出力ファイルが存在すれば\cs{file_input:V}で読み込みます。
+%   \texttt{auto-appendix=true}の場合は、読み込みの直前に\cs{clearpage}と\cs{appendix}を発行します。
+%   なお、ストリームが一度も開かれていない場合（例：\texttt{auto-open-stream=true}かつ書き込みなし）に備えて、
+%   出力時にも必要最小限のファイル名検証を行います。
 %    \begin{macrocode}
 \cs_new_protected:Nn \@@_output_content:
   {
@@ -615,6 +654,10 @@
       { ! \g_@@_already_output_bool }
       {
         \@@_close_stream:
+        \tl_if_empty:NT \g_@@_filename_tl
+          {
+            \@@_ensure_filename_valid:
+          }
         \file_if_exist:VTF \g_@@_filename_tl
           {
             \bool_if:NT \g_@@_auto_appendix_bool { \clearpage \appendix }
@@ -708,11 +751,7 @@
 %    \begin{macrocode}
 \NewDocumentEnvironment { AfterAppendix } { +b }
   { }
-  {
-    \@@_after_appendix:nn
-      { \g_@@_active_bool }
-      { #1 }
-  }
+  { \@@_after_appendix_if_active:n { #1 } }
 %    \end{macrocode}
 % \end{environment}
 %
@@ -721,11 +760,7 @@
 %    \begin{macrocode}
 \NewDocumentEnvironment { OnlySubAppendix } { +b }
   { }
-  {
-    \@@_after_appendix:nn
-      { \g_@@_sub_mode_bool }
-      { #1 }
-  }
+  { \@@_after_appendix_if_sub:n { #1 } }
 %    \end{macrocode}
 % \end{environment}
 %
@@ -734,11 +769,7 @@
 %    \begin{macrocode}
 \NewDocumentEnvironment { OnlyMainAppendix } { +b }
   { }
-  {
-    \@@_after_appendix:nn
-      { ! \g_@@_sub_mode_bool }
-      { #1 }
-  }
+  { \@@_after_appendix_if_main:n { #1 } }
 %    \end{macrocode}
 % \end{environment}
 %
