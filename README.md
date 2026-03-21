@@ -17,6 +17,7 @@
 ## インストール
 
 `AppendixAfter.sty` を TeX をTEXMFLOCAL等に置いてください。(`kpsewhich -var-value=TEXMFLOCAL`をすれば見つけることが出来ます。)
+そのご、`mktexlsr`してください。
 
 ## 使い方
 
